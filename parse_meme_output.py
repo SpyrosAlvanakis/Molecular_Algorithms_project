@@ -29,10 +29,10 @@ def parse_meme_sites(sites_info, motif_df, filename):
     # meme_site_pattern = r'(?P<site_id>\S+)\s+(?P<start_number>\d+)\s+\S+\s+(?P<motif_sequence>\S+)\s+\S+\s+\S+'
     meme_site_dict = {'Sequence_ID': [],
                       'Site': [],
-                      'Starting_Point': [],
+                      'Starting_position': [],
                       'Score': [],
                       'Width': [],
-                      'File_Name': []
+                      'File_name': []
                       }
 
     for i, site in enumerate(sites_info):
@@ -47,10 +47,10 @@ def parse_meme_sites(sites_info, motif_df, filename):
         for j, match in enumerate(sites_per_motif):
             meme_site_dict['Sequence_ID'].append(match.group('seq_id'))
             meme_site_dict['Score'].append(float(motif_df['Score'].loc[motif_index]))
-            meme_site_dict['Starting_Point'].append(int(match.group('start_number')))
+            meme_site_dict['Starting_position'].append(int(match.group('start_number')))
             meme_site_dict['Site'].append(match.group('site'))
             meme_site_dict['Width'].append(int(motif_df['Width'].loc[motif_index]))
-            meme_site_dict['File_Name'].append(filename)
+            meme_site_dict['File_name'].append(filename)
 
     meme_site_df = pd.DataFrame(meme_site_dict)
     return meme_site_df
@@ -85,5 +85,5 @@ def parse_meme_files():
 
 if __name__ == "__main__":
     data = parse_meme_files()
-    data.sort_values(by=['File_Name', 'Sequence_ID', 'Score'], inplace=True, ascending=False)
+    data.sort_values(by=['File_name', 'Sequence_ID', 'Score'], inplace=True, ascending=False)
     data.to_csv('meme_sites.csv', encoding='utf-8')
