@@ -1,0 +1,5 @@
+*.csv
+/Results
+*.png
+*.jpg
+*.pdf
