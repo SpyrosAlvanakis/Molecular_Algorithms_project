@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 
-def parse_meme_motif(motif_info, filename):
+def parse_motif(motif_info, filename):
     meme_dict = {'File_name': [],
                  'Motif_ID': [],
                  'Width': [],
@@ -24,7 +24,7 @@ def parse_meme_motif(motif_info, filename):
     return meme_motif_df
 
 
-def parse_meme_sites(sites_info, motif_df, filename):
+def parse_sites(sites_info, motif_df, filename):
     meme_site_pattern = r'(?P<seq_id>\d+-\d+-(?:forward|reverse))\s*(?P<start_number>\d+)\s+\S+\s+(?P<site>\S+)\s+\S+\s+\S+'
     # meme_site_pattern = r'(?P<site_id>\S+)\s+(?P<start_number>\d+)\s+\S+\s+(?P<motif_sequence>\S+)\s+\S+\s+\S+'
     meme_site_dict = {'Sequence_ID': [],
@@ -74,8 +74,8 @@ def parse_meme_files():
         meme_sites = re.findall(sites_pattern, meme_output)
 
         name = filename.split('_')[0]
-        meme_motif_df = parse_meme_motif(meme_motif_info, name)
-        meme_sites_df = parse_meme_sites(meme_sites, meme_motif_df, name)
+        meme_motif_df = parse_motif(meme_motif_info, name)
+        meme_sites_df = parse_sites(meme_sites, meme_motif_df, name)
 
         results_list.append(meme_sites_df)
 
@@ -86,4 +86,5 @@ def parse_meme_files():
 if __name__ == "__main__":
     data = parse_meme_files()
     data.sort_values(by=['File_name', 'Sequence_ID', 'Score'], inplace=True, ascending=False)
+    data.reset_index(drop=True, inplace=True)
     data.to_csv('meme_sites.csv', encoding='utf-8')
