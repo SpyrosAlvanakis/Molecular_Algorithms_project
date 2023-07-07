@@ -38,28 +38,29 @@ def nucleotide_accuracy(pred_df, mode='nPC', score_group=None):
         mask = pred_df['Subgroup'].str.contains('_'+str(score_group)+'_')
         pred_df = pred_df[mask].copy()
         pred_df.reset_index(inplace=True, drop=True)
-        print(pred_df)
 
-    filenames = set(pred_df['Subgroup'].str.split('_').str[0])
-    motif_groups_num = len(filenames)
-    print(f'Motif groups {motif_groups_num}')
+    # filenames = pred_df['Subgroup'].str.split('_').str[0]
+    # total_motif_groups_num = len(set(filenames))
+    # print(f'Motif groups {total_motif_groups_num}')
+    #
+    # temp_df_non_zero = pred_df[pred_df[mode] != 0].copy()
+    # sequences = pred_df['Subgroup'].str.split('_').str[2]
+    # total_sequences_num = len(set(sequences))
+    # non_zero_sequence_num = len(set(temp_df_non_zero['Subgroup'].str.split('_').str[2]))
+    # print(f'Sequences {total_sequences_num}, {non_zero_sequence_num}')
 
-    sequences = set(pred_df['Subgroup'].str.split('_').str[2])
-    sequences_num = len(sequences)
-    print(f'Sequences {sequences_num}')
+    total_sites_num = pred_df.shape[0]
+    # non_zero_sites_num = temp_df_non_zero.shape[0]
+    # print(f'Sites {total_sites_num}')
 
-    sites_num = pred_df.shape[0]
-    print(f'Sites {sites_num}')
-
-    if mode == 'nSp':
-        sums = int(pred_df['nSp'].sum(axis=0))
-    elif mode == 'nSn':
-        sums = int(pred_df['nSn'].sum(axis=0))
+    if mode in ['nSp', 'nSn', 'nPC']:
+        sums = int(pred_df[mode].sum(axis=0))
     else:
         sums = int(pred_df['nPC'].sum(axis=0))
 
-    accuracy = sums / (motif_groups_num * sequences_num * sites_num)
+    accuracy = sums / total_sites_num
     return accuracy
+
 
 def site_metrics():
     pass
