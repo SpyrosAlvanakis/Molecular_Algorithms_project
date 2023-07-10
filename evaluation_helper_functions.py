@@ -4,7 +4,7 @@ import re
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-from Accuracy_scores import nucleotide_metrics, site_accuracy, nucleotide_accuracy
+from Accuracy_scores import nucleotide_metrics, site_accuracy, nucleotide_accuracy, nucleotide_acc_weights
 from Voting_Smoothing import make_motif_group_df
 
 
@@ -169,4 +169,39 @@ def plot_site_accuracies(predictions, mode='sPC', dataset='Type B', margin='200'
 
     plt.suptitle(f'EMD {algorithms} Accuracy {mode} on Dataset {dataset} with Margin {margin} and {runs} Runs', fontsize=15)
     plt.savefig(f'accuracy_{mode}_{algorithms}_{dataset}{margin}_{runs}.png')
+    plt.show()
+
+
+def plot_nucleotide_weighted_accuracies(predictions, wset=1, mode='nPC', dataset='Type B', margin='200', algorithms='BP-MD-ME-MS', runs='10'):
+    total = round(nucleotide_acc_weights(predictions, mode=mode), 3)
+    group1 = round(nucleotide_acc_weights(predictions, mode=mode, score_group=1), 3)
+    group2 = round(nucleotide_acc_weights(predictions, mode=mode, score_group=2), 3)
+    group3 = round(nucleotide_acc_weights(predictions, mode=mode, score_group=3), 3)
+    group4 = round(nucleotide_acc_weights(predictions, mode=mode, score_group=4), 3)
+    group5 = round(nucleotide_acc_weights(predictions, mode=mode, score_group=5), 3)
+
+    results = {'Total': total}
+
+    if group1 != 0:
+        results['Score Group 1'] = group1
+    if group2 != 0:
+        results['Score Group 2'] = group2
+    if group3 != 0:
+        results['Score Group 3'] = group3
+    if group4 != 0:
+        results['Score Group 4'] = group4
+    if group5 != 0:
+        results['Score Group 5'] = group5
+
+    plt.rcParams["figure.autolayout"] = True
+    plt.figure(figsize=(10,8))
+    sns.set_style('whitegrid')
+    ax = sns.barplot(x=list(results.keys()), y=list(results.values()), color='blue', palette='hls')
+    ax.bar_label(ax.containers[0], fmt='%.3f')
+
+    plt.xlabel('Score Groups', fontsize=15)
+    plt.ylabel(f'Accuracy {mode}', fontsize=15)
+
+    plt.suptitle(f'EMD {algorithms} Accuracy {mode} on Weighted Dataset {dataset} (weight set {wset}) with Margin {margin} and {runs} Runs', fontsize=15)
+    plt.savefig(f'accuracy{mode}{algorithms}{dataset}{margin}_{runs}_wset{wset}.png')
     plt.show()
