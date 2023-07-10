@@ -13,4 +13,4 @@ def return_the_files(path):
                 only_results.append(name)
     name_counts = Counter(only_results)
     unique_names = [name for name, count in name_counts.items() if count > 1] 
-    return  unique_names 
+    return unique_names
