@@ -111,3 +111,19 @@ def site_accuracy(pred_df, threshold=1, mode='sPC', score_group=None):
 
     return accuracy
 
+#### Spyros ####
+
+def nucleotide_acc_weights(pred_df, mode='nPC', score_group=None):
+    if score_group is not None:
+        pred_df = pred_df[pred_df['Subgroup'].str.contains('_' + str(score_group) + '_')].copy()
+        pred_df.reset_index(drop=True, inplace=True)
+
+    total_sites_num = pred_df['Weights'].sum()
+
+    if mode in ['nSp', 'nSn', 'nPC']:
+        sums = (pred_df[mode] * pred_df['Weights']).sum()
+    else:
+        sums = (pred_df['nPC'] * pred_df['Weights']).sum()
+
+    accuracy = sums / total_sites_num
+    return accuracy

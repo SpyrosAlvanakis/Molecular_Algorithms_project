@@ -2,6 +2,7 @@ import pandas as pd
 import math
 import sys
 import os
+import matplotlib.pyplot as plt
 
 
 def select_algorithms_to_vote(grouped_df, algs):
@@ -57,6 +58,19 @@ def apply_smoothing(grouped_df, width_column, voting_df):
     return smoothed_df
 
 
+# def get_max_and_range(smoothed_df):
+#     # Create a DataFrame with maximum values and their positions (column names)
+#     max_values_df = smoothed_df.idxmax(axis=1).to_frame('Position')
+#     max_values_df['Max_Value'] = smoothed_df.max(axis=1)
+
+#     # Convert 'Position' column to integer, as it might be in string format
+#     max_values_df['Position'] = max_values_df['Position'].astype(int)
+
+#     # Create a new column with the range
+#     max_values_df['Range'] = max_values_df['Position'].apply(lambda x: range(x - 7, x + 8))
+    
+#     return max_values_df
+
 def get_max_and_range(smoothed_df):
     # Create a DataFrame with maximum values and their positions (column names)
     max_values_df = smoothed_df.idxmax(axis=1).to_frame('Position')
@@ -65,10 +79,17 @@ def get_max_and_range(smoothed_df):
     # Convert 'Position' column to integer, as it might be in string format
     max_values_df['Position'] = max_values_df['Position'].astype(int)
 
+    # Reset index to get regular row indexes
+    max_values_df.reset_index(inplace=True)
+
+    # Rename 'index' column to 'Subgroup'
+    max_values_df.rename(columns={'index': 'Subgroup'}, inplace=True)
+
     # Create a new column with the range
     max_values_df['Range'] = max_values_df['Position'].apply(lambda x: range(x - 7, x + 8))
-    
+
     return max_values_df
+
 
 
 def counts_of_common(grouped_df):
@@ -142,3 +163,108 @@ def add_predicted_site_sequence(predictions_df, input_dataset_path):
                     predictions_df.at[idx, 'Predicted_sequence'] = site_sequence
 
     return predictions_df
+
+def plot_starting_position_subplots(starting_position_counts, subgroups):
+    num_subplots = len(subgroups)
+    num_cols = min(num_subplots, 3)
+    num_rows = (num_subplots - 1) // num_cols + 1
+
+    if num_subplots == 1:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.bar(*zip(*starting_position_counts[subgroups[0]].items()))
+        ax.set_xlabel('Starting Position')
+        ax.set_ylabel('Count')
+        ax.set_title(f'Starting Position Counts - Subgroup: {subgroups[0]}')
+        ax.tick_params(axis='x', rotation=90)
+    else:
+        fig, axes = plt.subplots(num_rows, num_cols, figsize=(12, 6*num_rows))
+        fig.subplots_adjust(hspace=0.4)
+
+        for i, subgroup in enumerate(subgroups):
+            counts = starting_position_counts[subgroup]
+            positions = list(counts.keys())
+            counts = list(counts.values())
+
+            if num_rows > 1:
+                ax = axes[i // num_cols, i % num_cols]
+            else:
+                ax = axes[i % num_cols]
+
+            ax.bar(positions, counts)
+            ax.set_xlabel('Starting Position')
+            ax.set_ylabel('Count')
+            ax.set_title(f'{subgroup}')
+            ax.tick_params(axis='x', rotation=90)
+
+    plt.show()
+    
+def find_similar_motifs(streme_results, ground_truth):
+    similar_motifs = {}
+
+    for _, row_gt in ground_truth.iterrows():
+        target_motif = row_gt['Target_Motif']
+        for _, row_sr in streme_results.iterrows():
+            site = row_sr['Site']
+            differences = sum(s != t for s, t in zip(target_motif, site))
+            if differences <= 8:
+                similar_motifs[target_motif] = differences
+                break
+
+    return similar_motifs
+
+def add_weights_with_similarity(predictions, streme_results):
+    # Initialize the 'Weights' column to 1
+    predictions['Weights'] = 1
+
+    # Define the weights for different levels of similarity
+    similarity_weights = {0:1, 1: 0.9, 2: 0.8, 3: 0.7, 4: 0.6, 5: 0.5, 6: 0.4, 7: 0.3, 8: 0.1}
+
+    # Get the unique file names in streme_results
+    unique_file_names = streme_results['File_name'].str.split('_', n=1, expand=True)[0].unique()
+
+    # Iterate over each unique file name
+    for file_name in unique_file_names:
+        # Filter the streme_results for the current file name
+        file_results = streme_results[streme_results['File_name'].str.startswith(file_name)]
+
+        # Filter the ground_truth based on the file name part
+        filtered_ground_truth = predictions[predictions['Subgroup'].str.startswith(file_name)]
+
+        # Find similar motifs using the find_similar_motifs function
+        similar_motifs = find_similar_motifs(file_results, filtered_ground_truth)
+
+        # Iterate over each row in the filtered ground_truth
+        for _, row in filtered_ground_truth.iterrows():
+            # Check if the target motif is in the similar motifs
+            if row['Predicted_sequence'] in similar_motifs:
+                # Get the number of differences
+                differences = similar_motifs[row['Predicted_sequence']]
+
+                # Add the corresponding weight based on the number of differences
+                weight = similarity_weights.get(differences, 0)
+                predictions.loc[_, 'Weights'] += weight
+
+    return predictions
+
+def plot_weight_distribution(weighten_df):
+    weight_counts = weighten_df['Weights'].value_counts().sort_index()
+
+    colors = ['skyblue', 'lightgreen', 'salmon', 'gold', 'lightcoral']
+    bar_width = 0.8
+    x_indices = np.arange(len(weight_counts))
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    bars = ax.bar(x_indices, weight_counts.values, color=colors, width=bar_width)
+
+    ax.set_xticks(x_indices)
+    ax.set_xticklabels(weight_counts.index)
+
+    ax.set_xlabel('Weight')
+    ax.set_ylabel('Count')
+    ax.set_title('Weight Distribution with at most 8 Differences')
+
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width() / 2, height, int(height), ha='center', va='bottom')
+
+    plt.show()
