@@ -74,7 +74,8 @@ def site_accuracy(pred_df, threshold=1, mode='sPC', score_group=None):
         seq_id = row['Subgroup'].split('_')[2]
 
         overlap = check_overlap(start_pred, stop_pred, start_true, stop_true)
-        if pred_width - overlap <= threshold:
+        # if pred_width - overlap <= threshold:
+        if overlap >= threshold:
             true_positives += 1
             if seq_id in list(target_sequence_overlap.keys()):
                 target_sequence_overlap[seq_id] += 1
