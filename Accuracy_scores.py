@@ -114,6 +114,7 @@ def site_accuracy(pred_df, threshold=1, mode='sPC', score_group=None):
 
 #### Spyros ####
 
+
 def nucleotide_acc_weights(pred_df, mode='nPC', score_group=None):
     if score_group is not None:
         pred_df = pred_df[pred_df['Subgroup'].str.contains('_' + str(score_group) + '_')].copy()
