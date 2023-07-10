@@ -36,24 +36,30 @@ def add_ground_truth_columns(predictions_df, ground_truth_dir, input_datasets_di
             'Ending_position'].astype(str) + '-' + targets_df['Orientation']
 
         for idx, target_motif in targets_df.iterrows():
-            seq_id = target_motif['Sequence_ID']
+            # Match ground truth sequence id with the sequence id in the motif group input file to get the original
+            # sequence
+            seq_id = str(target_motif['Sequence_ID']).strip()
             seq_id_mask = motif_group_df['Sequence_ID'] == seq_id
             seq_index = list(motif_group_df[seq_id_mask].index)
             if len(seq_index) > 0:
                 index = seq_index[0]
                 input_sequence = str(motif_group_df.iloc[index]['Sequence']).strip()
 
-                target_motif_sequence = target_motif['Sequence']
+                target_motif_sequence = str(target_motif['Sequence']).strip()
                 uppercase_part = re.findall('[A-Z]+', target_motif_sequence)
 
                 try:
                     target_site = uppercase_part[0]
+                    # find the position of the ground truth motif inside the input sequence
                     target_site_start_pos = input_sequence.index(target_site)
                     target_site_end_pos = target_site_start_pos + len(target_site)
 
+                    # Use a mask to match the current sequence id with the sequence ids in the predictions dataframe
                     mask_predicted_seq_id = predictions_df['Subgroup'].str.contains(seq_id)
                     predicted_sites = predictions_df[mask_predicted_seq_id]
                     for pred_idx, row in predicted_sites.iterrows():
+                        # Store in the predictions matched, the target positions as found above and the original input
+                        # sequence
                         predictions_df.at[pred_idx, 'Target_Start_pos'] = target_site_start_pos
                         predictions_df.at[pred_idx, 'Target_Stop_pos'] = target_site_end_pos
                         predictions_df['Input_Sequence'] = input_sequence
@@ -88,11 +94,20 @@ def add_nucleotide_metrics_columns(predictions_df):
 
 def fix_alg_names(algs):
     alg_names = {'bioprospector': 'BP',
+                 'meme': 'ME',
+                 'motifSampler': 'MS',
+                 'mdscan': 'MD'
                  }
 
+    alg_abbr = [alg_names[name] for name in algs]
+    names_string = '-'.join(alg_abbr)
+    return names_string
 
 
-def plot_nucleotide_accuracies(predictions, mode='nPC', dataset='Type B', margin='200', algorithms='BP-MD-ME-MS', runs='10'):
+def plot_nucleotide_accuracies(predictions, mode='nPC', dataset='Type B', margin='200', algorithms=None, runs='10'):
+    if algorithms is None:
+        algorithms = ['bioprospector', 'meme', 'motifSampler', 'mdscan']
+    algorithms = fix_alg_names(algorithms)
     total = round(nucleotide_accuracy(predictions, mode=mode), 3)
     group1 = round(nucleotide_accuracy(predictions, mode=mode, score_group=1), 3)
     group2 = round(nucleotide_accuracy(predictions, mode=mode, score_group=2), 3)
@@ -114,8 +129,8 @@ def plot_nucleotide_accuracies(predictions, mode='nPC', dataset='Type B', margin
     ax = sns.barplot(x=list(results.keys()), y=list(results.values()), color='blue', palette='hls')
     ax.bar_label(ax.containers[0], fmt='%.3f')
 
-    plt.xlabel('Score Groups', fontsize = 15)
-    plt.ylabel(f'Accuracy {mode}', fontsize = 15)
+    plt.xlabel('Score Groups', fontsize=15)
+    plt.ylabel(f'Accuracy {mode}', fontsize=15)
 
 
     plt.suptitle(f'EMD {algorithms} Accuracy {mode} on Dataset {dataset} with Margin {margin} and {runs} Runs', fontsize=15)
@@ -123,7 +138,10 @@ def plot_nucleotide_accuracies(predictions, mode='nPC', dataset='Type B', margin
     plt.show()
 
 
-def plot_site_accuracies(predictions, mode='sPC', dataset='Type B', margin='200', algorithms='BP-MD-ME-MS', runs='10'):
+def plot_site_accuracies(predictions, mode='sPC', dataset='Type B', margin='200', algorithms=None, runs='10'):
+    if algorithms is None:
+        algorithms = ['bioprospector', 'meme', 'motifSampler', 'mdscan']
+    algorithms = fix_alg_names(algorithms)
     total = round(site_accuracy(predictions, mode=mode), 3)
     group1 = round(site_accuracy(predictions, mode=mode, score_group=1), 3)
     group2 = round(site_accuracy(predictions, mode=mode, score_group=2), 3)
@@ -145,8 +163,8 @@ def plot_site_accuracies(predictions, mode='sPC', dataset='Type B', margin='200'
     ax = sns.barplot(x=list(results.keys()), y=list(results.values()), color='green', palette='hls')
     ax.bar_label(ax.containers[0], fmt='%.3f')
 
-    plt.xlabel('Score Groups', fontsize = 15)
-    plt.ylabel(f'Accuracy {mode}', fontsize = 15)
+    plt.xlabel('Score Groups', fontsize=15)
+    plt.ylabel(f'Accuracy {mode}', fontsize=15)
 
 
     plt.suptitle(f'EMD {algorithms} Accuracy {mode} on Dataset {dataset} with Margin {margin} and {runs} Runs', fontsize=15)

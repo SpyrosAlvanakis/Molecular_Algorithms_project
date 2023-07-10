@@ -39,6 +39,7 @@ def nucleotide_accuracy(pred_df, mode='nPC', score_group=None):
         mask = pred_df['Subgroup'].str.contains('_' + str(score_group) + '_')
         pred_df = pred_df[mask].copy()
         pred_df.reset_index(inplace=True, drop=True)
+        # print(pred_df.Subgroup)
 
     total_sites_num = pred_df.shape[0]
 

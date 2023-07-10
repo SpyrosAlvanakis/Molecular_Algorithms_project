@@ -7,6 +7,7 @@ import numpy as np
 
 
 def select_algorithms_to_vote(grouped_df, algs):
+    grouped_df['Width'].fillna(grouped_df['Site'].str.len(), inplace=True)
     mask_algs = grouped_df['Algorithm'].isin(algs)
     grouped_df = grouped_df[mask_algs].copy()
     grouped_df.reset_index(inplace=True, drop=True)
@@ -14,7 +15,6 @@ def select_algorithms_to_vote(grouped_df, algs):
 
 
 def calculate_voting_results(grouped_df):
-
     grouped_df['Width'].fillna(grouped_df['Site'].str.len(), inplace=True)
     grouped_df['Position_Range'] = grouped_df.apply(
         lambda row: range(int(row['Starting_position']), int(row['Starting_position'] + row['Width'])), axis=1)
@@ -131,10 +131,10 @@ def make_motif_group_df(text):
         line = line.strip()
         if line.startswith('>'):
             # Extract the header (row starting with ">")
-            headers.append(line[1:])
+            headers.append(line[1:].strip())
         else:
             # Extract the sequence
-            sequences.append(line)
+            sequences.append(line.strip())
 
     # Create a DataFrame from the lists
     df = pd.DataFrame({'Sequence_ID': headers, 'Sequence': sequences})
