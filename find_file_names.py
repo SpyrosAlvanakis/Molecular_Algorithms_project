@@ -1,6 +1,7 @@
 import os
 from collections import Counter
 
+
 def return_the_files(path):
     txt_files = [file for file in os.listdir(path) if file.endswith(".txt")]
     only_results = []

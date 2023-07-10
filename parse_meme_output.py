@@ -56,11 +56,10 @@ def parse_sites(sites_info, motif_df, filename):
     return meme_site_df
 
 
-def parse_meme_files():
-    meme_dir = os.path.join(os.getcwd(), 'Results/MEME')
+def parse_meme_files(meme_dir):
     files = os.listdir(meme_dir)
     filtered_files = list(filter(lambda name: name if name.find('10') == -1 else '', files))
-    print(len(filtered_files))
+    # print(len(filtered_files))
 
     meme_motif_pattern = r'MOTIF\s+(?P<motif>\w+)\s+MEME-(?P<index>\d)\s+width\s+=\s+(?P<width>\d+)\s+sites\s+=\s+(?P<sites>\d+).+E-value\s*=\s*(?P<evalue>\d+(?:\.\d+)?(?:e[+-]?\d+)?)'
     sites_pattern = r'MEME-(\d+) sites sorted by position p-value\n(?:.*\n){3}((?:(?!-+).*\n)*)'
@@ -84,7 +83,8 @@ def parse_meme_files():
 
 
 if __name__ == "__main__":
-    data = parse_meme_files()
+    meme_dir = os.path.join(os.getcwd(), 'Results/MEME')
+    data = parse_meme_files(meme_dir)
     data.sort_values(by=['File_name', 'Sequence_ID', 'Score'], inplace=True, ascending=False)
     data.reset_index(drop=True, inplace=True)
     data.to_csv('meme_sites.csv', encoding='utf-8')

@@ -62,11 +62,10 @@ def parse_sites(sites_info, motif_df, filename):
     return sites_df
 
 
-def parse_motifSampler_files():
-    ms_dir = os.path.join(os.getcwd(), 'Results/MotifSampler')
+def parse_motifSampler_files(ms_dir):
     files = os.listdir(ms_dir)
     filtered_files = list(filter(lambda name: name if name.find('.txt') > -1 else '', files))
-    print(len(filtered_files))
+    # print(len(filtered_files))
 
     pattern_id_cs = r'#id: (?P<motif_id>\S+).*cs: (?P<score>\S+)'
     pattern_sites = r'(?P<seq_id>\d+-\d+-(?:forward|reverse)).*misc_feature\s*(?P<start_pos>\d+).*id "(?P<motif_id>\S+)"; site "(?P<site>\S+)";'
@@ -87,12 +86,13 @@ def parse_motifSampler_files():
         results_list.append(sites_df)
 
     results_df = pd.concat(results_list, ignore_index=True)
-    print(results_df.head())
+    # print(results_df.head())
     return results_df
 
 
 if __name__ == "__main__":
-    data = parse_motifSampler_files()
+    ms_dir = os.path.join(os.getcwd(), 'Results/MotifSampler')
+    data = parse_motifSampler_files(ms_dir)
 
     data.sort_values(by=['File_name', 'Sequence_ID', 'Score'], inplace=True, ascending=False)
     data.reset_index(drop=True, inplace=True)
