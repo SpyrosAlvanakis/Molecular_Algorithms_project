@@ -3,6 +3,7 @@ import math
 import sys
 import os
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def select_algorithms_to_vote(grouped_df, algs):
@@ -202,7 +203,7 @@ def find_similar_motifs(streme_results, ground_truth):
     similar_motifs = {}
 
     for _, row_gt in ground_truth.iterrows():
-        target_motif = row_gt['Target_Motif']
+        target_motif = row_gt['Predicted_sequence']
         for _, row_sr in streme_results.iterrows():
             site = row_sr['Site']
             differences = sum(s != t for s, t in zip(target_motif, site))
@@ -212,12 +213,12 @@ def find_similar_motifs(streme_results, ground_truth):
 
     return similar_motifs
 
-def add_weights_with_similarity(predictions, streme_results):
+def add_weights_with_similarity(predictions, streme_results, weight_set):
     # Initialize the 'Weights' column to 1
     predictions['Weights'] = 1
 
     # Define the weights for different levels of similarity
-    similarity_weights = {0:1, 1: 0.9, 2: 0.8, 3: 0.7, 4: 0.6, 5: 0.5, 6: 0.4, 7: 0.3, 8: 0.1}
+    similarity_weights = weight_set
 
     # Get the unique file names in streme_results
     unique_file_names = streme_results['File_name'].str.split('_', n=1, expand=True)[0].unique()
@@ -245,26 +246,3 @@ def add_weights_with_similarity(predictions, streme_results):
                 predictions.loc[_, 'Weights'] += weight
 
     return predictions
-
-def plot_weight_distribution(weighten_df):
-    weight_counts = weighten_df['Weights'].value_counts().sort_index()
-
-    colors = ['skyblue', 'lightgreen', 'salmon', 'gold', 'lightcoral']
-    bar_width = 0.8
-    x_indices = np.arange(len(weight_counts))
-
-    fig, ax = plt.subplots(figsize=(8, 6))
-    bars = ax.bar(x_indices, weight_counts.values, color=colors, width=bar_width)
-
-    ax.set_xticks(x_indices)
-    ax.set_xticklabels(weight_counts.index)
-
-    ax.set_xlabel('Weight')
-    ax.set_ylabel('Count')
-    ax.set_title('Weight Distribution with at most 8 Differences')
-
-    for bar in bars:
-        height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width() / 2, height, int(height), ha='center', va='bottom')
-
-    plt.show()
