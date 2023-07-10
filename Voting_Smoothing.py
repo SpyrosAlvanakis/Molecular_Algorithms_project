@@ -1,6 +1,7 @@
 import pandas as pd 
 import math
 import sys
+import os
 
 
 def select_algorithms_to_vote(grouped_df, algs):
@@ -99,3 +100,45 @@ def counts_of_common(grouped_df):
     return starting_position_counts, site_counts
 
 
+def make_motif_group_df(text):
+    headers = []
+    sequences = []
+
+    # Iterate over the lines
+    for line in text:
+        line = line.strip()
+        if line.startswith('>'):
+            # Extract the header (row starting with ">")
+            headers.append(line[1:])
+        else:
+            # Extract the sequence
+            sequences.append(line)
+
+    # Create a DataFrame from the lists
+    df = pd.DataFrame({'Sequence_ID': headers, 'Sequence': sequences})
+    return df
+
+
+def add_predicted_site_sequence(predictions_df, input_dataset_path):
+    input_files = os.listdir(input_dataset_path)
+
+    predictions_df['Predicted_sequence'] = pd.DataFrame(['' for _ in range(predictions_df.shape[0])])
+
+    for motif_group_file in input_files:
+        with open(os.path.join(input_dataset_path, motif_group_file), 'r') as file:
+            motif_group = file.readlines()
+
+        motif_group_df = make_motif_group_df(motif_group)
+        for _, row in motif_group_df.iterrows():
+            sequence = str(row['Sequence']).strip()
+            seq_id = row['Sequence_ID']
+            mask_predicted_seq_id = predictions_df['Subgroup'].str.contains(seq_id)
+            seq_index = list(predictions_df[mask_predicted_seq_id].index)
+            if len(seq_index) > 0:
+                for idx in seq_index:
+                    start_idx = predictions_df.iloc[idx]['Position']-7
+                    end_idx = predictions_df.iloc[idx]['Position']+7
+                    site_sequence = sequence[start_idx:end_idx+1]
+                    predictions_df.at[idx, 'Predicted_sequence'] = site_sequence
+
+    return predictions_df
