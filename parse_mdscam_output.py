@@ -25,6 +25,13 @@ def get_site_info_MD(site_info, motif_info, file_name):
 
 
 def process_MDScan_output(directory_of_files):
+    """
+    This function read the txt files found in the given directory and parses them assuming they follow the output format
+    of MDscan.
+
+    :param directory_of_files: A string that should be the directory containing the output results of MDScan
+    :return:
+    """
     # Extract the motifs using regex
     motif_pattern = r"Motif\s+(\d+):\s+Wid\s+(\d+);\s+Score\s+([\d.]+);\s+Sites\s+(\d+);\s+Con\s+([ACGT]+);\s+RCon\s+([ACGT]+)"
     # motif_info = re.findall(motif_pattern, mdscan_output)
